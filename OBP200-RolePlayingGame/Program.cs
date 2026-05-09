@@ -217,18 +217,15 @@ class Program
 
     static bool DoBattle(bool isBoss)
     {
-        var enemy = GenerateEnemy(isBoss);
-        Console.WriteLine($"En {enemy[1]} dyker upp! (HP {enemy[2]}, ATK {enemy[3]}, DEF {enemy[4]})");
-
-        int enemyHp = ParseInt(enemy[2], 10);
-        int enemyAtk = ParseInt(enemy[3], 3);
-        int enemyDef = ParseInt(enemy[4], 0);
-
-        while (enemyHp > 0 && !IsPlayerDead())
+        Enemy enemy = GenerateEnemy(isBoss);
+        
+        Console.WriteLine($"En {enemy.Name} dyker upp! (HP {enemy.HP}, ATK {enemy.AttackStat}, DEF {enemy.DefenceStat})");
+        
+        while (enemy.HP > 0 && !IsPlayerDead())
         {
             Console.WriteLine();
             ShowStatus();
-            Console.WriteLine($"Fiende: {enemy[1]} HP={enemyHp}");
+            Console.WriteLine($"Fiende: {enemy.Name} HP={enemy.HP}");
             Console.WriteLine("[A] Attack   [X] Special   [P] Dryck   [R] Fly");
             if (isBoss) Console.WriteLine("(Du kan inte fly från en boss!)");
             Console.Write("Val: ");
@@ -237,15 +234,15 @@ class Program
 
             if (cmd == "A")
             {
-                int damage = CalculatePlayerDamage(enemyDef);
-                enemyHp -= damage;
-                Console.WriteLine($"Du slog {enemy[1]} för {damage} skada.");
+                int damage = CalculatePlayerDamage(enemy.DefenceStat);
+                enemy.HP -= damage;
+                Console.WriteLine($"Du slog {enemy.Name} för {damage} skada.");
             }
             else if (cmd == "X")
             {
-                int special = UseClassSpecial(enemyDef, isBoss);
-                enemyHp -= special;
-                Console.WriteLine($"Special! {enemy[1]} tar {special} skada.");
+                int special = UseClassSpecial(enemy.DefenceStat, isBoss);
+                enemy.HP -= special;
+                Console.WriteLine($"Special! {enemy.Name} tar {special} skada.");
             }
             else if (cmd == "P")
             {
@@ -268,12 +265,13 @@ class Program
                 Console.WriteLine("Du tvekar...");
             }
 
-            if (enemyHp <= 0) break;
+            if (enemy.HP <= 0) 
+                break;
 
             // Fiendens tur
-            int enemyDamage = CalculateEnemyDamage(enemyAtk);
+            int enemyDamage = CalculateEnemyDamage(enemy.AttackStat);
             ApplyDamageToPlayer(enemyDamage);
-            Console.WriteLine($"{enemy[1]} anfaller och gör {enemyDamage} skada!");
+            Console.WriteLine($"{enemy.Name} anfaller och gör {enemyDamage} skada!");
         }
 
         if (IsPlayerDead())
@@ -282,14 +280,11 @@ class Program
         }
 
         // Vinstrapporter, XP, guld, loot
-        int xpReward = ParseInt(enemy[5], 5);
-        int goldReward = ParseInt(enemy[6], 3);
+        AddPlayerXp(enemy.ExpReward);
+        AddPlayerGold(enemy.GoldReward);
 
-        AddPlayerXp(xpReward);
-        AddPlayerGold(goldReward);
-
-        Console.WriteLine($"Seger! +{xpReward} XP, +{goldReward} guld.");
-        MaybeDropLoot(enemy[1]);
+        Console.WriteLine($"Seger! +{enemy.ExpReward} XP, +{enemy.GoldReward} guld.");
+        MaybeDropLoot(enemy.Name);
 
         return true;
     }
