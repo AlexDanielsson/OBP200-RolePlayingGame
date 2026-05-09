@@ -2,7 +2,7 @@
 
 public class Player
 {
-    public string PlayerName { get; set; }
+    public string PlayerName { get; set; } 
     public string PlayerClass { get; set; }
     
     public int CurrentHP { get; set; }
@@ -19,8 +19,4 @@ public class Player
 
     public List<string> Inventory { get; set; } = new();
 
-    public Player()
-    {
-        
-    }
 }

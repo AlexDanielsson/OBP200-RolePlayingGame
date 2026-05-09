@@ -294,14 +294,23 @@ class Program
         return true;
     }
 
-    static string[] GenerateEnemy(bool isBoss)
+    static Enemy GenerateEnemy(bool isBoss)
     {
         if (isBoss)
         {
-            // Boss-mall
-            return new[] { "boss", "Urdraken", "55", "9", "4", "30", "50" };
+            return new Enemy
+            { 
+                Type = "boss",
+                Name = "Urdraken",
+                HP = 55,
+                AttackStat = 9,
+                DefenceStat = 4,
+                ExpReward = 30,
+                GoldReward = 50
+            };
+
         }
-        else
+        
         {
             // Slumpa bland templates
             var template = EnemyTemplates[Rng.Next(EnemyTemplates.Count)];
@@ -310,9 +319,18 @@ class Program
             int hp = ParseInt(template[2], 10) + Rng.Next(-1, 3);
             int atk = ParseInt(template[3], 3) + Rng.Next(0, 2);
             int def = ParseInt(template[4], 0) + Rng.Next(0, 2);
-            int xp = ParseInt(template[5], 4) + Rng.Next(0, 3);
-            int gold = ParseInt(template[6], 2) + Rng.Next(0, 3);
-            return new[] { template[0], template[1], hp.ToString(), atk.ToString(), def.ToString(), xp.ToString(), gold.ToString() };
+
+            return new Enemy
+            {
+                Type = template[0],
+                Name = template[1],
+                HP = hp,
+                AttackStat = atk,
+                DefenceStat = def,
+                ExpReward = ParseInt(template[5], 4),
+                GoldReward = ParseInt(template[6], 2)
+
+            };
         }
     }
 
