@@ -9,7 +9,7 @@ public class Player
     public int MaxHP { get; set; }
     
     public int AttackStat { get; set; }
-    public int DefenseStat { get; set; }
+    public int DefenceStat { get; set; }
     
     public int PlayerExp { get; set; }
     public int PlayerLevel { get; set; }

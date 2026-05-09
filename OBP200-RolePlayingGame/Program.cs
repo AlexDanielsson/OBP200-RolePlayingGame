@@ -63,6 +63,15 @@ class Program
 
     static void StartNewGame()
     {
+        string playerClass;
+        int maxHp;
+        int currentHp;
+        int attackStat;
+        int defenceStat;
+        int potionsInventory;
+        int goldInventory;
+        
+        
         Console.Write("Ange namn: ");
         var name = (Console.ReadLine() ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) name = "Namnlös";
@@ -109,7 +118,7 @@ class Program
             CurrentHP = currentHp,
             MaxHP = maxHp,
             AttackStat = attackStat,
-            DefenseStat = defenceStat,
+            DefenceStat = defenceStat,
             PlayerExp = 0,
             PlayerLevel = 1,
             GoldInventory = goldInventory,
@@ -321,7 +330,7 @@ class Program
         string playerClass = Player.PlayerClass;
 
         // Beräkna grundskada
-        int baseDmg = Math.Max(1, attackStat - (enemyDef / 2));
+        int baseDmg = Math.Max(1, Player.AttackStat - (enemyDef / 2));
         int roll = Rng.Next(0, 3); // liten variation
 
         switch (playerClass.Trim())
@@ -353,25 +362,22 @@ class Program
         {
             // Heavy Strike: hög skada men självskada
             Console.WriteLine("Warrior använder Heavy Strike!");
-            int attackStat = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
-            specialDmg = Math.Max(2, attackStat + 3 - enemyDef);
+            specialDmg = Math.Max(2, Player.AttackStat + 3 - enemyDef);
             ApplyDamageToPlayer(2); // självskada
         }
         else if (playerClass == "Mage")
         {
             // Fireball: stor skada, kostar guld
-            int gold = Player.GoldInventory;
-            if (gold >= 3)
+            if (Player.GoldInventory >= 3)
             {
                 Console.WriteLine("Mage kastar Fireball!");
-                OBP200_RolePlayingGame.Player[6] = (GoldInventory - 3).ToString();
-                int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
-                specialDmg = Math.Max(3, atk + 5 - (enemyDef / 2));
+                Player.GoldInventory -= 3;
+                specialDmg = Math.Max(3, Player.AttackStat + 5 - (enemyDef / 2));
             }
             else
             {
                 Console.WriteLine("Inte tillräckligt med guld för att kasta Fireball (kostar 3).");
-                specialDmg = 0;
+                return 0;
             }
         }
         else if (playerClass == "Rogue")
@@ -380,8 +386,7 @@ class Program
             if (Rng.NextDouble() < 0.5)
             {
                 Console.WriteLine("Rogue utför en lyckad Backstab!");
-                int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
-                specialDmg = Math.Max(4, atk + 6);
+                specialDmg = Math.Max(4, Player.AttackStat + 6);
             }
             else
             {
@@ -405,13 +410,16 @@ class Program
 
     static int CalculateEnemyDamage(int enemyAtk)
     {
-        int def = Player.DefenseStat;
+        int def = Player.DefenceStat;
         int roll = Rng.Next(0, 3);
 
         int dmg = Math.Max(1, enemyAtk - (def / 2)) + roll;
 
         // Liten chans till "glancing blow" (minskad skada)
-        if (Rng.NextDouble() < 0.1) dmg = Math.Max(1, dmg - 2);
+        if (Rng.NextDouble() < 0.1)
+        {
+            dmg = Math.Max(1, dmg - 2);
+        }
 
         return dmg;
     }
@@ -444,7 +452,7 @@ class Program
     static bool TryRunAway()
     {
         // Flyktschans baserad på karaktärsklass
-        string playerClass = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
+        string playerClass = Player.PlayerClass ?? "Warrior";
         double chance = 0.25;
         if (playerClass == "Rogue") chance = 0.5;
         if (playerClass == "Mage") chance = 0.35;
@@ -458,57 +466,52 @@ class Program
 
     static void AddPlayerXp(int amount)
     {
-        int xp = ParseInt(OBP200_RolePlayingGame.Player[7], 0) + Math.Max(0, amount);
-        OBP200_RolePlayingGame.Player[7] = xp.ToString();
+        Player.PlayerExp += Math.Max(0, amount);
         MaybeLevelUp();
     }
 
     static void AddPlayerGold(int amount)
     {
-        int gold = ParseInt(OBP200_RolePlayingGame.Player[6], 0) + Math.Max(0, amount);
-        OBP200_RolePlayingGame.Player[6] = gold.ToString();
+        Player.GoldInventory += Math.Max(0, amount);
     }
 
     static void MaybeLevelUp()
     {
         // Nivåtrösklar
-        int xp = ParseInt(OBP200_RolePlayingGame.Player[7], 0);
-        int lvl = ParseInt(OBP200_RolePlayingGame.Player[8], 1);
+        int exp = Player.PlayerExp;
+        int lvl = Player.PlayerLevel;
+        
         int nextThreshold = lvl == 1 ? 10 : (lvl == 2 ? 25 : (lvl == 3 ? 45 : lvl * 20));
-
-        if (xp >= nextThreshold)
-        {
-            OBP200_RolePlayingGame.Player[8] = (lvl + 1).ToString();
-
-            // Uppgradering baserad på karaktärsklass
-            string playerClass = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
-            int maxHp = ParseInt(OBP200_RolePlayingGame.Player[3], 1);
-            int attackStat = ParseInt(OBP200_RolePlayingGame.Player[4], 1);
-            int defenceStat = ParseInt(OBP200_RolePlayingGame.Player[5], 0);
-
-            switch (playerClass)
+        if (exp < nextThreshold)
+            return;
+        
+        
+            Player.PlayerLevel++;
+            Player.PlayerExp = 0;
+            
+            switch (Player.PlayerClass)
             {
                 case "Warrior":
-                    maxHp += 6; attackStat += 2; defenceStat += 2;
+                    Player.MaxHP += 6;
+                    Player.AttackStat += 2;
+                    Player.DefenceStat += 2;
                     break;
                 case "Mage":
-                    maxHp += 4; attackStat += 4; defenceStat += 1;
+                    Player.MaxHP += 4;
+                    Player.AttackStat+= 4;
+                    Player.DefenceStat += 1;
                     break;
                 case "Rogue":
-                    maxHp += 5; attackStat += 3; defenceStat += 1;
-                    break;
-                default:
-                    maxHp += 4; attackStat += 3; defenceStat += 1;
+                    Player.MaxHP += 5;
+                    Player.AttackStat += 3;
+                    Player.DefenceStat += 1;
                     break;
             }
 
-            OBP200_RolePlayingGame.Player[3] = maxHp.ToString();
-            OBP200_RolePlayingGame.Player[4] = attackStat.ToString();
-            OBP200_RolePlayingGame.Player[5] = defenceStat.ToString();
-            OBP200_RolePlayingGame.Player[2] = maxHp.ToString(); // full heal vid level up
+            Player.CurrentHP = Player.MaxHP;
 
-            Console.WriteLine($"Du når nivå {lvl + 1}! Värden ökade och HP återställd.");
-        }
+            Console.WriteLine($"Du når nivå {Player.PlayerLevel}! Värden ökade och HP återställd.");
+        
     }
 
     static void MaybeDropLoot(string enemyName)
@@ -517,12 +520,14 @@ class Program
         if (Rng.NextDouble() < 0.35)
         {
             string item = "Minor Gem";
-            if (enemyName.Contains("Urdraken")) item = "Dragon Scale";
+            
+            if (enemyName.Contains("Urdraken"))
+            {
+                item = "Dragon Scale";
+            }
 
-            var inv = (OBP200_RolePlayingGame.Player[10] ?? "").Trim();
-            if (string.IsNullOrEmpty(inv)) OBP200_RolePlayingGame.Player[10] = item;
-            else OBP200_RolePlayingGame.Player[10] = inv + ";" + item;
-
+            Player.Inventory.Add(item);
+            
             Console.WriteLine($"Föremål hittat: {item} (lagt i din väska)");
         }
     }
@@ -532,6 +537,7 @@ class Program
     static bool DoTreasure()
     {
         Console.WriteLine("Du hittar en gammal kista...");
+        
         if (Rng.NextDouble() < 0.5)
         {
             int gold = Rng.Next(8, 15);
@@ -541,9 +547,11 @@ class Program
         else
         {
             var items = new[] { "Iron Dagger", "Oak Staff", "Leather Vest", "Healing Herb" };
+            
             string found = items[Rng.Next(items.Length)];
-            var inv = (OBP200_RolePlayingGame.Player[10] ?? "").Trim();
-            OBP200_RolePlayingGame.Player[10] = string.IsNullOrEmpty(inv) ? found : (inv + ";" + found);
+            
+            Player.Inventory.Add(found);
+            
             Console.WriteLine($"Du plockar upp: {found}");
         }
         return true;
@@ -554,7 +562,7 @@ class Program
         Console.WriteLine("En vandrande köpman erbjuder sina varor:");
         while (true)
         {
-            Console.WriteLine($"Guld: {OBP200_RolePlayingGame.Player[6]} | Drycker: {OBP200_RolePlayingGame.Player[9]}");
+            Console.WriteLine($"Guld: {Player.GoldInventory} | Drycker: {Player.PotionsInventory}");
             Console.WriteLine("1) Köp dryck (10 guld)");
             Console.WriteLine("2) Köp vapen (+2 ATK) (25 guld)");
             Console.WriteLine("3) Köp rustning (+2 DEF) (25 guld)");
@@ -563,79 +571,99 @@ class Program
             Console.Write("Val: ");
             var val = (Console.ReadLine() ?? "").Trim();
 
-            if (val == "1")
+            switch (val)
             {
-                TryBuy(10, () => OBP200_RolePlayingGame.Player[9] = (ParseInt(OBP200_RolePlayingGame.Player[9], 0) + 1).ToString(), "Du köper en dryck.");
-            }
-            else if (val == "2")
-            {
-                TryBuy(25, () => OBP200_RolePlayingGame.Player[4] = (ParseInt(OBP200_RolePlayingGame.Player[4], 0) + 2).ToString(), "Du köper ett bättre vapen.");
-            }
-            else if (val == "3")
-            {
-                TryBuy(25, () => OBP200_RolePlayingGame.Player[5] = (ParseInt(OBP200_RolePlayingGame.Player[5], 0) + 2).ToString(), "Du köper bättre rustning.");
-            }
-            else if (val == "4")
-            {
-                SellMinorGems();
-            }
-            else if (val == "5")
-            {
-                Console.WriteLine("Du säger adjö till köpmannen.");
-                break;
-            }
-            else
-            {
-                Console.WriteLine("Köpmannen förstår inte ditt val.");
+                case "1":
+                    BuyPotion();
+                    break;
+                
+                case "2":
+                    BuyWeapon();
+                    break;
+                
+                case "3":
+                    BuyArmor();
+                    break;
+                
+                case "4":
+                    SellMinorGems();
+                    break;
+                
+                case "5": 
+                    Console.WriteLine("Du säger adjö till köpmannen.");
+                    return true;
+                
+                default:
+                    Console.WriteLine("Köpmannen förstår inte ditt val.");
+                    break;
+                    
             }
         }
-        return true;
     }
 
-    static void TryBuy(int cost, Action apply, string successMsg)
+    static void BuyPotion()
     {
-        int gold = ParseInt(OBP200_RolePlayingGame.Player[6], 0);
-        if (gold >= cost)
-        {
-            OBP200_RolePlayingGame.Player[6] = (gold - cost).ToString();
-            apply();
-            Console.WriteLine(successMsg);
-        }
-        else
+        if (Player.GoldInventory < 10)
         {
             Console.WriteLine("Du har inte råd.");
+            return;
         }
+        Player.GoldInventory -= 10;
+        Player.PotionsInventory++;
+        Console.WriteLine("Du köper en dryck.");
+    }
+
+    static void BuyWeapon()
+    {
+        if (Player.GoldInventory < 25)
+        {
+            Console.WriteLine("Du har inte råd.");
+            return; 
+        }
+        Player.GoldInventory -= 25;
+        Player.AttackStat += 2;
+        Console.WriteLine("Du köper ett bättre vapen (+2 ATK).");
+    }
+
+    static void BuyArmor()
+    {
+        if (Player.GoldInventory < 25)
+        {
+            Console.WriteLine("Du har inte råd.");
+            return;
+        }
+        Player.GoldInventory -= 25;
+        Player.DefenceStat += 2;
+        Console.WriteLine("Du köper bättre rustning.(+2 DEF)");
     }
 
     static void SellMinorGems()
     {
-        var inv = (OBP200_RolePlayingGame.Player[10] ?? "");
-        if (string.IsNullOrWhiteSpace(inv))
+        int count = 0;
+        foreach (var item in Player.Inventory)
         {
-            Console.WriteLine("Du har inga föremål att sälja.");
-            return;
+            if (item == "Minor Gem")
+            { 
+                count++;
+            }
         }
-
-        var items = inv.Split(';').Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-        int count = items.Count(x => x == "Minor Gem");
         if (count == 0)
         {
-            Console.WriteLine("Inga 'Minor Gem' i väskan.");
+            Console.WriteLine("Du har inga Minor Gems i väskan.");
             return;
         }
 
-        items = items.Where(x => x != "Minor Gem").ToList();
-        OBP200_RolePlayingGame.Player[10] = items.Count == 0 ? "" : string.Join(";", items);
-
-        AddPlayerGold(count * 5);
+        Player.Inventory.RemoveAll(item => item == "Minor Gem");
+        int goldEarned = count * 5;
+        Player.GoldInventory += goldEarned;
+        
         Console.WriteLine($"Du säljer {count} st Minor Gem för {count * 5} guld.");
     }
 
     static bool DoRest()
     {
         Console.WriteLine("Du slår läger och vilar.");
-        int maxhp = ParseInt(OBP200_RolePlayingGame.Player[3], 1);
-        OBP200_RolePlayingGame.Player[2] = maxhp.ToString();
+        Player.CurrentHP = Player.MaxHP;
         Console.WriteLine("HP återställt till max.");
         return true;
     }
@@ -647,7 +675,7 @@ class Program
         Console.WriteLine($"[{Player.PlayerName} | {Player.PlayerClass}] " +
                           $"HP {Player.CurrentHP}/{Player.MaxHP} " +
                           $"ATK {Player.AttackStat} " +
-                          $"DEF {Player.DefenseStat} " +
+                          $"DEF {Player.DefenceStat} " +
                           $"LVL {Player.PlayerLevel} " +
                           $"XP {Player.PlayerExp}" +
                           $"Guld {Player.GoldInventory}" +
