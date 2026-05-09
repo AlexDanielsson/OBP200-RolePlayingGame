@@ -69,9 +69,9 @@ class Program
 
         Console.WriteLine("Välj klass: 1) Warrior  2) Mage  3) Rogue");
         Console.Write("Val: ");
-        var k = (Console.ReadLine() ?? "").Trim();
-
-        string playerClass = "Warrior";
+        var playerChoice = (Console.ReadLine() ?? "").Trim();
+        
+        playerClass = "Warrior"; // Warrior: Låg damage, hög defence
         maxHp = 40; 
         currentHp = 40; 
         attackStat = 7;
@@ -79,9 +79,9 @@ class Program
         potionsInventory = 2; 
         goldInventory = 15;
         
-        switch (k)
+        switch (playerChoice)
         {
-            case "2": // Mage: hög damage, låg def
+            case "2": // Mage: Hög damage, låg defence
                 playerClass = "Mage";
                 maxHp = 28;
                 currentHp = 28;
@@ -104,7 +104,7 @@ class Program
         Player = new Player
         
         {
-            PlayerName = playerName,
+            PlayerName = name,
             PlayerClass = playerClass,
             CurrentHP = currentHp,
             MaxHP = maxHp,
@@ -133,7 +133,7 @@ class Program
 
         CurrentRoomIndex = 0;
 
-        Console.WriteLine($"Välkommen, {name} the {cls}!");
+        Console.WriteLine($"Välkommen, {Player.PlayerName} the {Player.PlayerClass}!");
         ShowStatus();
     }
 
@@ -318,14 +318,13 @@ class Program
 
     static int CalculatePlayerDamage(int enemyDef)
     {
-        int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
-        string cls = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
+        string playerClass = Player.PlayerClass;
 
         // Beräkna grundskada
-        int baseDmg = Math.Max(1, atk - (enemyDef / 2));
+        int baseDmg = Math.Max(1, attackStat - (enemyDef / 2));
         int roll = Rng.Next(0, 3); // liten variation
 
-        switch (cls.Trim())
+        switch (playerClass.Trim())
         {
             case "Warrior":
                 baseDmg += 1; // warrior buff
@@ -346,26 +345,26 @@ class Program
 
     static int UseClassSpecial(int enemyDef, bool vsBoss)
     {
-        string cls = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
+        string playerClass = Player.PlayerClass ?? "Warrior";
         int specialDmg = 0;
 
         // Hantering av specialförmågor
-        if (cls == "Warrior")
+        if (playerClass == "Warrior")
         {
             // Heavy Strike: hög skada men självskada
             Console.WriteLine("Warrior använder Heavy Strike!");
-            int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
-            specialDmg = Math.Max(2, atk + 3 - enemyDef);
+            int attackStat = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
+            specialDmg = Math.Max(2, attackStat + 3 - enemyDef);
             ApplyDamageToPlayer(2); // självskada
         }
-        else if (cls == "Mage")
+        else if (playerClass == "Mage")
         {
             // Fireball: stor skada, kostar guld
-            int gold = ParseInt(OBP200_RolePlayingGame.Player[6], 0);
+            int gold = Player.GoldInventory;
             if (gold >= 3)
             {
                 Console.WriteLine("Mage kastar Fireball!");
-                OBP200_RolePlayingGame.Player[6] = (gold - 3).ToString();
+                OBP200_RolePlayingGame.Player[6] = (GoldInventory - 3).ToString();
                 int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 5);
                 specialDmg = Math.Max(3, atk + 5 - (enemyDef / 2));
             }
@@ -375,7 +374,7 @@ class Program
                 specialDmg = 0;
             }
         }
-        else if (cls == "Rogue")
+        else if (playerClass == "Rogue")
         {
             // Backstab: chans att ignorera försvar, hög risk/hög belöning
             if (Rng.NextDouble() < 0.5)
@@ -406,7 +405,7 @@ class Program
 
     static int CalculateEnemyDamage(int enemyAtk)
     {
-        int def = ParseInt(OBP200_RolePlayingGame.Player[5], 0);
+        int def = Player.DefenseStat;
         int roll = Rng.Next(0, 3);
 
         int dmg = Math.Max(1, enemyAtk - (def / 2)) + roll;
@@ -417,46 +416,44 @@ class Program
         return dmg;
     }
 
-    static void ApplyDamageToPlayer(int dmg)
+    static void ApplyDamageToPlayer(int damage)
     {
-        int hp = ParseInt(OBP200_RolePlayingGame.Player[2], 0);
-        hp -= Math.Max(0, dmg);
-        OBP200_RolePlayingGame.Player[2] = Math.Max(0, hp).ToString();
+        if(damage < 0)
+            return;
+        
+        Player.CurrentHP = Math.Max(0, Player.CurrentHP - damage);
     }
 
     static void UsePotion()
     {
-        int pot = ParseInt(OBP200_RolePlayingGame.Player[9], 0);
-        if (pot <= 0)
+        if (Player.PotionsInventory <= 0)
         {
             Console.WriteLine("Du har inga drycker kvar.");
             return;
         }
-        int hp = ParseInt(OBP200_RolePlayingGame.Player[2], 0);
-        int maxhp = ParseInt(OBP200_RolePlayingGame.Player[3], 1);
-
+        
         // Helning av spelaren
-        int heal = 12;
-        int newHp = Math.Min(maxhp, hp + heal);
-        OBP200_RolePlayingGame.Player[2] = newHp.ToString();
-        OBP200_RolePlayingGame.Player[9] = (pot - 1).ToString();
+        int healAmount = 12;
+        
+        Player.CurrentHP = Math.Min(Player.MaxHP, Player.CurrentHP + healAmount);
+        Player.PotionsInventory--;
 
-        Console.WriteLine($"Du dricker en dryck och återfår {newHp - hp} HP.");
+        Console.WriteLine($"Du dricker en dryck och återfår {healAmount} HP. Nu har du {Player.CurrentHP} HP.");
     }
 
     static bool TryRunAway()
     {
         // Flyktschans baserad på karaktärsklass
-        string cls = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
+        string playerClass = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
         double chance = 0.25;
-        if (cls == "Rogue") chance = 0.5;
-        if (cls == "Mage") chance = 0.35;
+        if (playerClass == "Rogue") chance = 0.5;
+        if (playerClass == "Mage") chance = 0.35;
         return Rng.NextDouble() < chance;
     }
 
     static bool IsPlayerDead()
     {
-        return ParseInt(OBP200_RolePlayingGame.Player[2], 0) <= 0;
+        return Player.CurrentHP <= 0;
     }
 
     static void AddPlayerXp(int amount)
@@ -484,31 +481,31 @@ class Program
             OBP200_RolePlayingGame.Player[8] = (lvl + 1).ToString();
 
             // Uppgradering baserad på karaktärsklass
-            string cls = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
-            int maxhp = ParseInt(OBP200_RolePlayingGame.Player[3], 1);
-            int atk = ParseInt(OBP200_RolePlayingGame.Player[4], 1);
-            int def = ParseInt(OBP200_RolePlayingGame.Player[5], 0);
+            string playerClass = OBP200_RolePlayingGame.Player[1] ?? "Warrior";
+            int maxHp = ParseInt(OBP200_RolePlayingGame.Player[3], 1);
+            int attackStat = ParseInt(OBP200_RolePlayingGame.Player[4], 1);
+            int defenceStat = ParseInt(OBP200_RolePlayingGame.Player[5], 0);
 
-            switch (cls)
+            switch (playerClass)
             {
                 case "Warrior":
-                    maxhp += 6; atk += 2; def += 2;
+                    maxHp += 6; attackStat += 2; defenceStat += 2;
                     break;
                 case "Mage":
-                    maxhp += 4; atk += 4; def += 1;
+                    maxHp += 4; attackStat += 4; defenceStat += 1;
                     break;
                 case "Rogue":
-                    maxhp += 5; atk += 3; def += 1;
+                    maxHp += 5; attackStat += 3; defenceStat += 1;
                     break;
                 default:
-                    maxhp += 4; atk += 3; def += 1;
+                    maxHp += 4; attackStat += 3; defenceStat += 1;
                     break;
             }
 
-            OBP200_RolePlayingGame.Player[3] = maxhp.ToString();
-            OBP200_RolePlayingGame.Player[4] = atk.ToString();
-            OBP200_RolePlayingGame.Player[5] = def.ToString();
-            OBP200_RolePlayingGame.Player[2] = maxhp.ToString(); // full heal vid level up
+            OBP200_RolePlayingGame.Player[3] = maxHp.ToString();
+            OBP200_RolePlayingGame.Player[4] = attackStat.ToString();
+            OBP200_RolePlayingGame.Player[5] = defenceStat.ToString();
+            OBP200_RolePlayingGame.Player[2] = maxHp.ToString(); // full heal vid level up
 
             Console.WriteLine($"Du når nivå {lvl + 1}! Värden ökade och HP återställd.");
         }
