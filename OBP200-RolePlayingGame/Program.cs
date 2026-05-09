@@ -269,7 +269,7 @@ class Program
                 break;
 
             // Fiendens tur
-            int enemyDamage = CalculateEnemyDamage(enemy.AttackStat);
+            int enemyDamage = enemy.CalculateAttackDamage();
             ApplyDamageToPlayer(enemyDamage);
             Console.WriteLine($"{enemy.Name} anfaller och gör {enemyDamage} skada!");
         }
@@ -293,12 +293,12 @@ class Program
     {
         if (isBoss)
         {
-            return new Enemy
+            return new BossEnemy
             { 
                 Type = "boss",
                 Name = "Urdraken",
                 HP = 55,
-                AttackStat = 9,
+                AttackStat = 7,
                 DefenceStat = 4,
                 ExpReward = 30,
                 GoldReward = 50
