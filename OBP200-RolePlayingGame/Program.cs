@@ -743,19 +743,4 @@ class Program
             Console.WriteLine($"Väska: {string.Join(", ", Player.Inventory)}");
         }
     }
-    
-    // ======= Hjälpmetoder =======
-
-    static int ParseInt(string s, int fallback)
-    {
-        try
-        {
-            int value = Convert.ToInt32(s);
-            return value;
-        }
-        catch (Exception e)
-        {
-            return fallback;
-        }
-    }
 }
