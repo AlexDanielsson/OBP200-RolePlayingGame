@@ -647,11 +647,19 @@ class Program
 
     static void ShowStatus()
     {
-        Console.WriteLine($"[{OBP200_RolePlayingGame.Player[0]} | {OBP200_RolePlayingGame.Player[1]}]  HP {OBP200_RolePlayingGame.Player[2]}/{OBP200_RolePlayingGame.Player[3]}  ATK {OBP200_RolePlayingGame.Player[4]}  DEF {OBP200_RolePlayingGame.Player[5]}  LVL {OBP200_RolePlayingGame.Player[8]}  XP {OBP200_RolePlayingGame.Player[7]}  Guld {OBP200_RolePlayingGame.Player[6]}  Drycker {OBP200_RolePlayingGame.Player[9]}");
-        var inv = (OBP200_RolePlayingGame.Player[10] ?? "");
-        if (!string.IsNullOrWhiteSpace(inv))
+        Console.WriteLine($"[{Player.PlayerName} | {Player.PlayerClass}] " +
+                          $"HP {Player.CurrentHP}/{Player.MaxHP} " +
+                          $"ATK {Player.AttackStat} " +
+                          $"DEF {Player.DefenseStat} " +
+                          $"LVL {Player.PlayerLevel} " +
+                          $"XP {Player.PlayerExp}" +
+                          $"Guld {Player.GoldInventory}" +
+                          $"Drycker {Player.PotionsInventory}"
+                          );
+        
+        if (Player.Inventory.Count > 0)
         {
-            Console.WriteLine($"Väska: {inv}");
+            Console.WriteLine($"Väska: {string.Join(", ", Player.Inventory)}");
         }
     }
     
