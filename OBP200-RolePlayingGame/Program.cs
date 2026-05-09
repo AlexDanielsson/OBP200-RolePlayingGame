@@ -12,7 +12,7 @@ class Program
     static List<string[]> Rooms = new List<string[]>();
 
     // Fiendemallar: [type, name, HP, ATK, DEF, XPReward, GoldReward]
-    static List<string[]> EnemyTemplates = new List<string[]>();
+    static List<Enemy> EnemyTemplates = new List<Enemy>();
 
     // Status för kartan
     static int CurrentRoomIndex = 0;
@@ -311,19 +311,19 @@ class Program
             var template = EnemyTemplates[Rng.Next(EnemyTemplates.Count)];
             
             // Slmumpmässig justering av stats
-            int hp = ParseInt(template[2], 10) + Rng.Next(-1, 3);
-            int atk = ParseInt(template[3], 3) + Rng.Next(0, 2);
-            int def = ParseInt(template[4], 0) + Rng.Next(0, 2);
+            int hp = template.HP + Rng.Next(-1, 3);
+            int atk = template.AttackStat + Rng.Next(0, 2);
+            int def = template.DefenceStat + Rng.Next(0, 2);
 
             return new Enemy
             {
-                Type = template[0],
-                Name = template[1],
+                Type = template.Type,
+                Name = template.Name,
                 HP = hp,
                 AttackStat = atk,
                 DefenceStat = def,
-                ExpReward = ParseInt(template[5], 4),
-                GoldReward = ParseInt(template[6], 2)
+                ExpReward = template.ExpReward,
+                GoldReward = template.GoldReward
 
             };
         }
@@ -332,10 +332,53 @@ class Program
     static void InitEnemyTemplates()
     {
         EnemyTemplates.Clear();
-        EnemyTemplates.Add(new[] { "beast", "Vildsvin", "18", "4", "1", "6", "4" });
-        EnemyTemplates.Add(new[] { "undead", "Skelett", "20", "5", "2", "7", "5" });
-        EnemyTemplates.Add(new[] { "bandit", "Bandit", "16", "6", "1", "8", "6" });
-        EnemyTemplates.Add(new[] { "slime", "Geléslem", "14", "3", "0", "5", "3" });
+        
+        EnemyTemplates.Add(new Enemy 
+        { 
+            Type = "beast",
+            Name = "Vildsvin",
+            HP = 18,
+            AttackStat = 4,
+            DefenceStat = 1,
+            ExpReward = 6,
+            GoldReward = 4 
+        });
+        
+        EnemyTemplates.Add(new Enemy
+        {
+           Type = "undead",
+           Name = "Skelett", 
+           HP = 20,
+           AttackStat = 5, 
+           DefenceStat = 2,
+           ExpReward = 7, 
+           GoldReward = 5 
+            
+        });
+        
+        EnemyTemplates.Add(new Enemy
+        {
+            Type = "bandit",
+            Name = "Bandit", 
+            HP = 16,
+            AttackStat = 6, 
+            DefenceStat = 1,
+            ExpReward = 8, 
+            GoldReward = 6
+            
+        });
+        
+        EnemyTemplates.Add(new Enemy
+        {
+            Type = "slime",
+            Name = "Geléslem", 
+            HP = 14,
+            AttackStat = 3, 
+            DefenceStat = 0,
+            ExpReward = 5, 
+            GoldReward = 3
+            
+        });
     }
 
     static int CalculatePlayerDamage(int enemyDef)
@@ -499,8 +542,8 @@ class Program
             return;
         
         
-            Player.PlayerLevel++;
-            Player.PlayerExp = 0;
+        Player.PlayerLevel++;
+        Player.PlayerExp = 0;
             
             switch (Player.PlayerClass)
             {
