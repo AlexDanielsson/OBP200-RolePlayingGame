@@ -5,20 +5,20 @@ namespace OBP200_RolePlayingGame;
 
 class Program
 {
-    static Player Player;
+    private static Player Player;
     
     // Rum: [type, label]
     // types: battle, treasure, shop, rest, boss
-    static List<string[]> Rooms = new List<string[]>();
+    private static List<string[]> Rooms = new List<string[]>();
 
     // Fiendemallar: [type, name, HP, ATK, DEF, XPReward, GoldReward]
-    static List<Enemy> EnemyTemplates = new List<Enemy>();
+    private static List<Enemy> EnemyTemplates = new List<Enemy>();
 
     // Status för kartan
-    static int CurrentRoomIndex = 0;
+    private static int CurrentRoomIndex = 0;
 
     // Random
-    static Random Rng = new Random();
+    private static Random Rng = new Random();
 
     // ======= Main =======
 
@@ -123,12 +123,9 @@ class Program
             PlayerLevel = 1,
             GoldInventory = goldInventory,
             PotionsInventory = potionsInventory,
-            Inventory = new List<string>
-            {
-                "Wooden Sword",
-                "Cloth Armor"
-            }
         };
+        Player.Inventory.Add("Wooden Sword");
+        Player.Inventory.Add("Cloth Armor");
 
         // Initiera karta (linjärt äventyr)
         Rooms.Clear();

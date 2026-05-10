@@ -11,7 +11,7 @@ public class Enemy
     
     public int ExpReward {get; set;}
     public int GoldReward {get; set;}
-
+    
     public virtual int CalculateAttackDamage()
     {
         return AttackStat;

@@ -17,6 +17,6 @@ public class Player
     public int GoldInventory { get; set; }
     public int PotionsInventory { get; set; }
 
-    public List<string> Inventory { get; set; } = new();
+    public List<string> Inventory { get; } = new();
 
 }
