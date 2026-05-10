@@ -733,8 +733,8 @@ class Program
                           $"ATK {Player.AttackStat} " +
                           $"DEF {Player.DefenceStat} " +
                           $"LVL {Player.PlayerLevel} " +
-                          $"XP {Player.PlayerExp}" +
-                          $"Guld {Player.GoldInventory}" +
+                          $"XP {Player.PlayerExp} " +
+                          $"Guld {Player.GoldInventory} " +
                           $"Drycker {Player.PotionsInventory}"
                           );
         
